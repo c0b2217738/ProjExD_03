@@ -1,3 +1,4 @@
+import math
 import random
 import sys
 import time
@@ -49,8 +50,20 @@ class Bird:
             True, 
             False
         )
-        self.rct = self.img.get_rect()
+        mv_img = { #画像保存場所
+            (+5, 0):pg.transform.rotozoom(self.img, 0, 1.0),
+            (+5,+5):pg.transform.rotozoom(self.img, -45, 1.0),#斜め右下
+            (-5,0):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), 0, 1.0),#反転
+            (+5,-5):pg.transform.rotozoom(self.img, 45, 1.0),#斜め右上
+            (0,+5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False),90, 1.0),#下
+            (-5,+5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), 45, 1.0),#斜め左下
+            (-5, -5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), -45, 1.0),#斜め左上
+            (0,-5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), -90, 1.0),#上
+        }
+        self.imgs = mv_img[(+5,0)]
+        self.rct = self.imgs.get_rect()
         self.rct.center = xy
+        self.dire = (+5,0)
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -67,16 +80,6 @@ class Bird:
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
-        mv_img = { #画像保存場所
-            (+5, 0):pg.transform.rotozoom(self.img, 0, 1.0),
-            (+5,+5):pg.transform.rotozoom(self.img, -45, 1.0),#斜め左上
-            (-5,0):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), 0, 1.0),#反転
-            (+5,-5):pg.transform.rotozoom(self.img, 45, 1.0),#斜め左下
-            (0,+5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False),90, 1.0),#上
-            (-5,+5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), 45, 1.0),#斜め右上
-            (-5, -5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), -45, 1.0),#斜め右下
-            (0,-5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), -90, 1.0),#下
-        }
         sum_mv = [0, 0]
         for k, mv in __class__.delta.items():
             if key_lst[k]:
@@ -85,13 +88,14 @@ class Bird:
         self.rct.move_ip(sum_mv)
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
+        
+        if sum_mv != [0,0]:
+            #移動量の合計(sum_mv)が0,0でないとき、self.direをsum_mvの値で更新
+            self.dire = (sum_mv[0],sum_mv[1])
 
-        for key, img in mv_img.items():
-            if sum_mv[0] == key[0] and sum_mv[1] == key[1]:
-                screen.blit(img, self.rct)
-            #何も入力されていない時
-            if sum_mv == [0,0]: 
-                screen.blit(self.img, self.rct)
+        if not (sum_mv[0] == 0 and sum_mv[1] == 0):
+            self.imgs = mv_img[tuple(sum_mv)]
+        screen.blit(self.imgs, self.rct)
 
 
 class Beam:
@@ -100,11 +104,14 @@ class Beam:
         ビーム画像Surfaceを生成する
         引数1 bird：こうかとんインスタンス
         """
-        self.img = pg.image.load(f"ex03/fig/beam.png")
+        self.vx, self.vy = bird.dire[0], bird.dire[1]
+        self.img = pg.transform.rotozoom(
+            pg.image.load(f"ex03/fig/beam.png"), 
+            math.degrees(math.atan2(-self.vy,self.vx)), 
+            1.0)
         self.rct = self.img.get_rect()
-        self.rct.left = bird.rct.right #こうかとんの横座標
-        self.rct.centery = bird.rct.centery #こうかとんの縦座標
-        self.vx, self.vy = +5, 0
+        self.rct.left = bird.rct.right + bird.rct.width * self.vx / 5#こうかとんの横座標
+        self.rct.centery = bird.rct.centery + bird.rct.height * self.vy / 5 #こうかとんの縦座標
 
     def update(self, screen: pg.Surface):
         """
