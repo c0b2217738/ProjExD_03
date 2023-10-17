@@ -184,12 +184,12 @@ def main():
                 time.sleep(1)
                 return
         
-        for B, bomb in enumerate(bombs):
+        for b, bomb in enumerate(bombs):
             if beam is not None:
                 if beam.rct.colliderect(bomb.rct):
                     # 爆弾とビームの衝突判定
                     beam = None
-                    bombs[B] = None
+                    bombs[b] = None
                     bird.change_img(6, screen)
                     pg.display.update()
                     time.sleep(1)
