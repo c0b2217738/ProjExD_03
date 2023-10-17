@@ -66,6 +66,16 @@ class Bird:
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
+        mv_img = { #画像保存場所
+            (+5, 0):pg.transform.rotozoom(self.img, 0, 1.0),
+            (+5,+5):pg.transform.rotozoom(self.img, -45, 1.0),#斜め左上
+            (-5,0):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), 0, 1.0),#反転
+            (+5,-5):pg.transform.rotozoom(self.img, 45, 1.0),#斜め左下
+            (0,+5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False),90, 1.0),#上
+            (-5,+5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), 45, 1.0),#斜め右上
+            (-5, -5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), -45, 1.0),#斜め右下
+            (0,-5):pg.transform.rotozoom(pg.transform.flip(self.img, True, False), -90, 1.0),#下
+        }
         sum_mv = [0, 0]
         for k, mv in __class__.delta.items():
             if key_lst[k]:
@@ -74,7 +84,13 @@ class Bird:
         self.rct.move_ip(sum_mv)
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
-        screen.blit(self.img, self.rct)
+
+        for key, img in mv_img.items():
+            if sum_mv[0] == key[0] and sum_mv[1] == key[1]:
+                screen.blit(img, self.rct)
+            #何も入力されていない時
+            if sum_mv == [0,0]: 
+                screen.blit(self.img, self.rct)
 
 
 class Beam:
